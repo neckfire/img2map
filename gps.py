@@ -55,6 +55,8 @@ class ImageMapApp(QMainWindow):
             map_html = generate_map(folder)
             QMessageBox.information(self, "Succès", f"La carte a été générée avec succès : {map_html}")
             sys.exit()
+        else:
+            sys.exit()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
