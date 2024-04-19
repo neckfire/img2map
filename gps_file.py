@@ -16,21 +16,19 @@ def extract_gps_tags(file_path):
             return latitude_ref, latitude, longitude_ref, longitude
     return None
 
-def generate_map(images_folder):
-    """Generate HTML map with images at GPS locations."""
+def generate_map(image_path):
+    """Generate HTML map with image at GPS location."""
     m = folium.Map()
-    for filename in os.listdir(images_folder):
-        if filename.endswith(".jpg") or filename.endswith(".jpeg") or filename.endswith(".png"):
-            image_path = os.path.join(images_folder, filename)
-            gps_tags = extract_gps_tags(image_path)
-            if gps_tags:
-                latitude_ref, latitude, longitude_ref, longitude = gps_tags
-                latitude_decimal = convert_to_decimal(latitude, latitude_ref)
-                longitude_decimal = convert_to_decimal(longitude, longitude_ref)
-                img_path = os.path.abspath(image_path)
-                popup_html = f'<img src="file://{img_path}" alt="{filename}" width="300px">'
-                folium.Marker(location=[latitude_decimal, longitude_decimal], popup=popup_html).add_to(m)
-    map_html_path = os.path.join(images_folder, "map.html")
+    gps_tags = extract_gps_tags(image_path)
+    if gps_tags:
+        latitude_ref, latitude, longitude_ref, longitude = gps_tags
+        latitude_decimal = convert_to_decimal(latitude, latitude_ref)
+        longitude_decimal = convert_to_decimal(longitude, longitude_ref)
+        img_path = os.path.abspath(image_path)
+        popup_html = f'{os.path.basename(image_path)}'
+        folium.Marker(location=[latitude_decimal, longitude_decimal], popup=popup_html).add_to(m)
+
+    map_html_path = os.path.join(os.path.dirname(image_path), "map.html")
     m.save(map_html_path)
     return map_html_path
 
@@ -47,12 +45,15 @@ def convert_to_decimal(value, ref):
 class ImageMapApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.select_folder()
+        self.setWindowTitle("Image Map Generator")
+        self.setGeometry(100, 100, 800, 600)
+        self.select_image()
 
-    def select_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Sélectionner un dossier")
-        if folder:
-            map_html = generate_map(folder)
+    def select_image(self):
+        options = QFileDialog.Options()
+        image_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner une image", "", "Image Files (*.jpg *.jpeg *.png)", options=options)
+        if image_path:
+            map_html = generate_map(image_path)
             QMessageBox.information(self, "Succès", f"La carte a été générée avec succès : {map_html}")
             sys.exit()
         else:
@@ -61,5 +62,5 @@ class ImageMapApp(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = ImageMapApp()
+    window.show()
     sys.exit(app.exec_())
-
